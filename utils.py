@@ -10,7 +10,7 @@ def check_container():
     return result.stdout.strip() != ''
 
 def check_and_run_docker():
-    cmd_run = "docker run -d -p 4444:4444 -p 7900:7900 --shm-size=2g --name=standalone-chrome selenium/standalone-chrome"
+    cmd_run = "docker run -d -p 4444:4444 -p 7900:7900 -p 5900:5900 --shm-size=2g --name=standalone-chrome selenium/standalone-chrome"
     if not check_container():
         print("Docker container not found, running...")
         subprocess.run(cmd_run, shell=True)
