@@ -9,21 +9,25 @@ class EmailFetcherSpider(scrapy.Spider):
                 company_block_css="ul.directory-providers__list >li.provider-card",
                 company_name_css="div.provider-header > h3::attr(title)",
                 website_link_css="a.provider-card__visit-btn.provider-visit.track-website-visit::attr(href)",
+                category=None,
                 *args, **kwargs):
         super(EmailFetcherSpider, self).__init__(*args, **kwargs)
         self.start_urls = [start_url]
         self.country_css = country_css
+        self.country = country
         if country_css:
             self.country = None
+        
         self.company_block_css = company_block_css
         self.company_name_css = company_name_css
         self.website_link_css = website_link_css
+        self.category = category
     def parse(self, response):
         company_block = response.css(self.company_block_css)
         for company in company_block:
             website_link = company.css(self.website_link_css).get()
             company_name = company.css(self.company_name_css).get()
-            country = company.css(self.country_css).get() if self.country_css else self.country
+            country = ' '.join(company.css(self.country_css).getall()).strip() if self.country_css else self.country
             yield response.follow(website_link, callback=self.parse_emails, meta={'company_name': company_name, 'is_homepage': True, 'country': country})
 
     def parse_emails(self, response):
@@ -41,7 +45,8 @@ class EmailFetcherSpider(scrapy.Spider):
                 "company_name": company_name,
                 "url": response.url,
                 "emails": emails,
-                "country": country
+                "country": country,
+                "category": self.category,
             }
         if is_homepage:
             for link in set(response.css("a::attr(href)").getall()):
